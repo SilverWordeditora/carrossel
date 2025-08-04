@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Carrossel automático de imagens</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #222;
+      color: #fff;
+    }
+    .carousel {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    }
+    .slides {
+      position: relative;
+      height: 0;
+      padding-bottom: 56.25%;
+    }
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1s ease;
+      pointer-events: none;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .indicators {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+    }
+    .indicator {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .indicator.active {
+      background: #fff;
+      color: #222;
+      transform: scale(1.2);
+    }
+    .indicator:focus {
+      outline: 2px solid #fff;
+      outline-offset: 3px;
+    }
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="carousel" role="region" aria-roledescription="carrossel" aria-label="Galeria de imagens">
+    <div class="slides">
+      <div class="slide active" role="tabpanel" aria-hidden="false" id="slide1">
+        <img src="https://drive.google.com/uc?export=view&id=18he_q_SE7TLMxuDjK1cQDpn98zbIeluM" alt="Imagem 1">
+      </div>
+      <div class="slide" role="tabpanel" aria-hidden="true" id="slide2">
+        <img src="https://drive.google.com/uc?export=view&id=1e0EscT-wtZ2Z7tEM0ffX7MGAVUNO5TNU" alt="Imagem 2">
+      </div>
+      <div class="slide" role="tabpanel" aria-hidden="true" id="slide3">
+        <img src="https://drive.google.com/uc?export=view&id=1DbZj-SrvhRDosk4vp-ldbpOOiXh-JO0-" alt="Imagem 3">
+      </div>
+      <div class="slide" role="tabpanel" aria-hidden="true" id="slide4">
+        <img src="https://drive.google.com/uc?export=view&id=15QFbyKhdmFdZq8dc2lyhX87vN1zVzhfv" alt="Imagem 4">
+      </div>
+      <div class="slide" role="tabpanel" aria-hidden="true" id="slide5">
+        <img src="https://drive.google.com/uc?export=view&id=1zy5KYzV3XzdrPwB8irB2OyxIA17Wm-WZ" alt="Imagem 5">
+      </div>
+    </div>
+    <div class="indicators" role="tablist" aria-label="Controles de slides">
+      <!-- Os botões serão criados pelo JavaScript -->
+    </div>
+    <div id="carousel-live" class="visually-hidden" aria-live="polite" aria-atomic="true">
+      Imagem 1 de 5
+    </div>
+  </div>
+
+  <script>
+    const TRANSITION_TIME_MS = 7000;
+    let currentIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const indicators = document.querySelector('.indicators');
+    const liveRegion = document.getElementById('carousel-live');
+    let autoTimer;
+
+    function goToSlide(index) {
+      slides[currentIndex].classList.remove('active');
+      slides[currentIndex].setAttribute('aria-hidden', 'true');
+      indicators.children[currentIndex].classList.remove('active');
+      indicators.children[currentIndex].setAttribute('aria-selected', 'false');
+
+      currentIndex = index;
+
+      slides[currentIndex].classList.add('active');
+      slides[currentIndex].setAttribute('aria-hidden', 'false');
+      indicators.children[currentIndex].classList.add('active');
+      indicators.children[currentIndex].setAttribute('aria-selected', 'true');
+      liveRegion.textContent = \`Imagem \${currentIndex + 1} de \${totalSlides}\`;
+    }
+
+    function nextSlide() {
+      const next = (currentIndex + 1) % totalSlides;
+      goToSlide(next);
+    }
+
+    function resetTimer() {
+      clearInterval(autoTimer);
+      autoTimer = setInterval(nextSlide, TRANSITION_TIME_MS);
+    }
+
+    function createIndicators() {
+      for (let i = 0; i < totalSlides; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'indicator';
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-label', \`Ir para imagem \${i + 1}\`);
+        btn.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+        btn.textContent = i + 1;
+        btn.addEventListener('click', () => {
+          goToSlide(i);
+          resetTimer();
+        });
+        indicators.appendChild(btn);
+      }
+      indicators.children[0].classList.add('active');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') {
+        nextSlide();
+        resetTimer();
+      } else if (e.key === 'ArrowLeft') {
+        goToSlide((currentIndex + totalSlides - 1) % totalSlides);
+        resetTimer();
+      }
+    });
+
+    const carouselEl = document.querySelector('.carousel');
+    carouselEl.addEventListener('mouseenter', () => clearInterval(autoTimer));
+    carouselEl.addEventListener('mouseleave', resetTimer);
+
+    createIndicators();
+    autoTimer = setInterval(nextSlide, TRANSITION_TIME_MS);
+  </script>
+</body>
+</html>
